@@ -3,34 +3,148 @@
 ---
 
 <div
-    class="w-full h-screen bg-linear-to-bl from-teal-400 to-blue-500 flex flex-col justify-center items-center text-white">
-    <h1 class="text-5xl">We are <b>Almost</b> there!</h1>
-    <p>Stay tuned for something amazing!!!</p>
+  class="w-full h-screen bg-linear-to-bl from-teal-400 to-blue-500 flex flex-col justify-center items-center text-white"
+>
+  <h1 class="text-5xl">¡Sitio Web <b>Próximamente</b>!</h1>
+  <p>Estamos trabajando duro para lanzar nuestro sitio. ¡Vuelve pronto!</p>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mt-10 lg:mt-20">
-
-        <div class="bg-transparent border text-center">
-            <p class="text-5xl px-10 py-5">336</p>
-            <hr>
-            <p class="px-10 py-5">days</p>
-        </div>
-
-        <div class="bg-transparent border text-center">
-            <p class="text-5xl px-10 py-5">03</p>
-            <hr>
-            <p class="px-10 py-5">hours</p>
-        </div>
-
-        <div class="bg-transparent border text-center">
-            <p class="text-5xl px-10 py-5">35</p>
-            <hr>
-            <p class="px-10 py-5">mins</p>
-        </div>
-        <div class="bg-transparent border text-center">
-            <p class="text-5xl px-10 py-5">01</p>
-            <hr>
-            <p class="px-10 py-5">secs</p>
-        </div>
+  <div
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mt-10 lg:mt-20"
+  >
+    <div class="bg-transparent border text-center">
+      <p id="countdown-days" class="text-5xl px-10 py-5">336</p>
+      <hr />
+      <p class="px-10 py-5">días</p>
     </div>
-    
+
+    <div class="bg-transparent border text-center">
+      <p id="countdown-hours" class="text-5xl px-10 py-5">03</p>
+      <hr />
+      <p class="px-10 py-5">horas</p>
+    </div>
+
+    <div class="bg-transparent border text-center">
+      <p id="countdown-minutes" class="text-5xl px-10 py-5">35</p>
+      <hr />
+      <p class="px-10 py-5">minutos</p>
+    </div>
+    <div class="bg-transparent border text-center">
+      <p id="countdown-seconds" class="text-5xl px-10 py-5">01</p>
+      <hr />
+      <p class="px-10 py-5">segundos</p>
+    </div>
+  </div>
 </div>
+<script>
+  // --- 1. Definición de Tipos e Interfaz ---
+
+  interface TimeRemaining {
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  }
+
+  // --- 2. La Clase CountdownTimer (TS Puro) ---
+
+  class CountdownTimer {
+    // En este ejemplo, partimos de 365 días (31536000 segundos).
+    // Si quisieras contar hasta una fecha futura específica (ej: 1 Enero 2026),
+    // inicializarías esto con la diferencia de segundos.
+    private totalSeconds: number;
+    private timerInterval: number | null = null;
+
+    constructor(
+      durationDays: number,
+      private onTick: (time: TimeRemaining) => void,
+      private onComplete: () => void
+    ) {
+      this.totalSeconds = durationDays * 24 * 60 * 60;
+    }
+
+    public start(): void {
+      if (this.timerInterval !== null) return;
+
+      // Llamada inicial
+      this.updateTime();
+
+      this.timerInterval = window.setInterval(() => {
+        this.totalSeconds--;
+        this.updateTime();
+
+        if (this.totalSeconds <= 0) {
+          this.stop();
+          this.onComplete();
+        }
+      }, 1000);
+    }
+
+    public stop(): void {
+      if (this.timerInterval !== null) {
+        window.clearInterval(this.timerInterval);
+        this.timerInterval = null;
+      }
+    }
+
+    private updateTime(): void {
+      const remaining = this.totalSeconds > 0 ? this.totalSeconds : 0;
+
+      // Lógica de conversión
+      const secondsInDay = 24 * 60 * 60;
+      const secondsInHour = 60 * 60;
+
+      const days = Math.floor(remaining / secondsInDay);
+      const hours = Math.floor((remaining % secondsInDay) / secondsInHour);
+      const minutes = Math.floor((remaining % secondsInHour) / 60);
+      const seconds = Math.floor(remaining % 60);
+
+      this.onTick({ days, hours, minutes, seconds });
+    }
+  }
+
+  // --- 3. Inicialización del Contador ---
+
+  // Función para asegurar el formato de 2 dígitos (ej: 5 -> 05), útil para horas/minutos/segundos
+  function pad(num: number): string {
+    // Los días no necesitan padding a menos que sean <= 9
+    if (num < 10 && num >= 0) {
+      return "0" + num;
+    }
+    return String(num);
+  }
+
+  // 3.1. Obtener las referencias a los elementos del DOM
+  const daysEl = document.getElementById("countdown-days");
+  const hoursEl = document.getElementById("countdown-hours");
+  const minutesEl = document.getElementById("countdown-minutes");
+  const secondsEl = document.getElementById("countdown-seconds");
+
+  // 3.2. Definir los callbacks
+  const onTickCallback = (time: TimeRemaining) => {
+    if (daysEl) daysEl.textContent = String(time.days);
+    if (hoursEl) hoursEl.textContent = pad(time.hours);
+    if (minutesEl) minutesEl.textContent = pad(time.minutes);
+    if (secondsEl) secondsEl.textContent = pad(time.seconds);
+  };
+
+  const onCompleteCallback = () => {
+    if (daysEl) daysEl.textContent = "0";
+    if (hoursEl) hoursEl.textContent = "00";
+    if (minutesEl) minutesEl.textContent = "00";
+    if (secondsEl) secondsEl.textContent = "00";
+  };
+
+  // 3.3. Verificar que los elementos existen e iniciar el contador.
+  // Usamos el evento 'DOMContentLoaded' para asegurarnos de que el DOM esté listo.
+  document.addEventListener("DOMContentLoaded", () => {
+    if (daysEl && hoursEl && minutesEl && secondsEl) {
+      // Inicia el contador desde 365 días
+      const timer = new CountdownTimer(365, onTickCallback, onCompleteCallback);
+      timer.start();
+    } else {
+      console.error(
+        "No se pudieron encontrar todos los elementos del contador en el DOM."
+      );
+    }
+  });
+</script>
