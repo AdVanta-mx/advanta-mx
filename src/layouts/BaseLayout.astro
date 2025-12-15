@@ -1,11 +1,12 @@
 ---
 interface Props {
   title?: string;
+  description?: string;
 }
 import "@/styles/global.css";
 import { APPLICATION_NAME } from "@/utils/constants";
 
-const { title = "Inicio" } = Astro.props;
+const { title = "Inicio", description = "Advanta es la mejor opción para tu negocio" } = Astro.props;
 ---
 
 <html lang="es">
@@ -13,9 +14,10 @@ const { title = "Inicio" } = Astro.props;
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />
-    <meta name="theme-color" content="#000000"/>
+    <meta name="theme-color" content="#000000" />
     <meta name="generator" content={Astro.generator} />
     <title>{APPLICATION_NAME} - {title}</title>
+    <meta name="description" content={description} />
   </head>
   <body>
     <header></header>
